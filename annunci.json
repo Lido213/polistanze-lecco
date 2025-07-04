@@ -7,7 +7,7 @@
         "lat": 45.8680,
         "lng": 9.4010,
         "dist": 5,
-        "images": ["Images/Maggianico_1/prova1.jpg"],
+        "images": ["prova1.jpg"],
         "features": ["wifi", "spese incluse"],
         "description": "Luminosa stanza singola in appartamento condiviso, a soli 5 minuti a piedi dal Politecnico. Completamente arredata e con Wi-Fi veloce incluso."
     },
