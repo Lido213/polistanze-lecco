@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoliStanze Lecco - Trova la tua stanza</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .hero-bg {
+            background-color: #1e3a8a;
+            background-image: linear-gradient(145deg, #1e3a8a 0%, #3b82f6 100%);
+        }
+        .nav-link.active {
+            color: #2563eb;
+            font-weight: 600;
+        }
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 300ms, transform 300ms; }
+        .modal-exit { opacity: 1; transform: scale(1); }
+        .modal-exit-active { opacity: 0; transform: scale(0.95); transition: opacity 300ms, transform 300ms; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+        .spinner { border-top-color: #3b82f6; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <nav class="container mx-auto px-4 lg:px-8 flex justify-between items-center py-4">
+            <div class="text-2xl font-bold text-blue-800">Poli<span class="text-blue-500">Stanze</span></div>
+            <div class="hidden md:flex items-center space-x-6" id="nav-links">
+                <a href="#search" class="nav-link text-stone-600 hover:text-blue-600 transition duration-200 active">Cerca</a>
+                <a href="#dashboard" class="nav-link text-stone-600 hover:text-blue-600 transition duration-200">Dashboard</a>
+                <a href="#profile" class="nav-link text-stone-600 hover:text-blue-600 transition duration-200">Profilo</a>
+                <a href="#my-home" class="nav-link text-stone-600 hover:text-blue-600 transition duration-200">Casa Mia</a>
+            </div>
+            <div>
+                <button class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200">Accedi</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 lg:px-8 py-8 md:py-12">
+
+        <div id="view-search">
+            <section class="text-center rounded-xl hero-bg text-white py-20 px-6 mb-12 shadow-xl">
+                 <h1 class="text-4xl md:text-5xl font-bold mb-4">Trova la tua stanza a Lecco</h1>
+                 <p class="text-lg md:text-xl max-w-3xl mx-auto mb-8 text-blue-100">La piattaforma esclusiva per gli studenti del Politecnico. Semplice, sicura ed efficiente.</p>
+                 <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                     <a href="#search" class="w-full sm:w-auto bg-white text-blue-700 font-semibold px-8 py-3 rounded-lg text-lg hover:bg-stone-100 transition duration-300 shadow-md">Sono uno Studente</a>
+                     <button onclick="alert('Funzionalità per proprietari in arrivo!')" class="w-full sm:w-auto bg-blue-500/50 backdrop-blur-sm text-white font-semibold px-8 py-3 rounded-lg text-lg hover:bg-blue-500/80 transition duration-300">Sono un Proprietario</button>
+                 </div>
+            </section>
+
+            <section id="search-section" class="mb-12">
+                <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+                    <h2 class="text-3xl font-bold text-stone-800 mb-2">Esplora gli alloggi</h2>
+                    <p class="text-stone-600">Utilizza i filtri per trovare la soluzione perfetta per te. I risultati si aggiorneranno in tempo reale.</p>
+                </div>
+                <div class="flex flex-col md:flex-row gap-8">
+                    <aside class="w-full md:w-1/4 lg:w-1/5 bg-white p-6 rounded-xl shadow-lg self-start">
+                        <h3 class="text-xl font-bold mb-6 border-b pb-3">Filtri</h3>
+                        <div class="mb-6">
+                            <label for="price" class="block text-md font-semibold mb-2 text-stone-700">Prezzo (€/mese)</label>
+                            <input type="range" id="price" min="200" max="1000" value="1000" class="w-full accent-blue-600">
+                            <div class="flex justify-between text-sm text-stone-500 mt-1"><span>200</span><span id="price-value">1000+</span></div>
+                        </div>
+                        <div class="mb-6">
+                            <h4 class="text-md font-semibold mb-3 text-stone-700">Tipologia</h4>
+                            <div class="space-y-2">
+                                <div><input type="checkbox" id="type-single" value="Stanza Singola" class="filter-type accent-blue-600 mr-2 rounded"><label for="type-single">Stanza Singola</label></div>
+                                <div><input type="checkbox" id="type-double" value="Stanza Doppia" class="filter-type accent-blue-600 mr-2 rounded"><label for="type-double">Stanza Doppia</label></div>
+                                <div><input type="checkbox" id="type-mono" value="Monolocale" class="filter-type accent-blue-600 mr-2 rounded"><label for="type-mono">Monolocale</label></div>
+                                <div><input type="checkbox" id="type-app" value="Appartamento" class="filter-type accent-blue-600 mr-2 rounded"><label for="type-app">Appartamento</label></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-md font-semibold mb-3 text-stone-700">Servizi</h4>
+                             <div class="space-y-2">
+                                <div><input type="checkbox" id="feature-wifi" value="wifi" class="filter-feature accent-blue-600 mr-2 rounded"><label for="feature-wifi">Wi-Fi</label></div>
+                                <div><input type="checkbox" id="feature-washing" value="lavatrice" class="filter-feature accent-blue-600 mr-2 rounded"><label for="feature-washing">Lavatrice</label></div>
+                                <div><input type="checkbox" id="feature-bills" value="spese incluse" class="filter-feature accent-blue-600 mr-2 rounded"><label for="feature-bills">Spese Incluse</label></div>
+                            </div>
+                        </div>
+                    </aside>
+                    <div class="w-full md:w-3/4 lg:w-4/5">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="bg-white p-2 rounded-lg shadow-sm">
+                                <button id="grid-view-btn" class="px-4 py-2 rounded-md bg-blue-600 text-white font-semibold">Griglia</button>
+                                <button id="map-view-btn" class="px-4 py-2 rounded-md text-stone-600 font-semibold">Mappa</button>
+                            </div>
+                            <div class="text-stone-600 font-medium"><span id="results-count"></span> annunci trovati</div>
+                        </div>
+                        <div id="grid-view" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+                        <div id="map-view" class="hidden h-[600px] w-full bg-white rounded-xl shadow-lg overflow-hidden">
+                            <div id="map" class="h-full w-full"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <div id="view-dashboard" class="hidden">
+            <section id="dashboard-section" class="mb-12">
+                <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+                    <h2 class="text-3xl font-bold text-stone-800 mb-2">Panoramica del Mercato</h2>
+                    <p class="text-stone-600">Dai un'occhiata alle statistiche attuali sulla disponibilità di alloggi sulla nostra piattaforma.</p>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <div class="chart-container">
+                        <canvas id="typeDistributionChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <div id="view-profile" class="hidden">
+            <section id="profile-section">
+                <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+                    <h2 class="text-3xl font-bold text-stone-800 mb-2">Il Mio Profilo</h2>
+                    <p class="text-stone-600">Questa è la tua pagina personale. I proprietari e gli altri studenti vedranno queste informazioni.</p>
+                </div>
+                <div id="profile-content"></div>
+            </section>
+        </div>
+
+        <div id="view-my-home" class="hidden">
+             <section id="my-home-section">
+                <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+                    <h2 class="text-3xl font-bold text-stone-800 mb-2">La Mia Casa</h2>
+                    <p class="text-stone-600">Gestisci la tua abitazione attuale, conosci i tuoi coinquilini e lascia una valutazione sulla vostra convivenza.</p>
+                </div>
+                <div id="my-home-content"></div>
+            </section>
+        </div>
+        
+    </main>
+
+    <footer class="bg-stone-800 text-white mt-12">
+        <div class="container mx-auto px-8 py-8 text-center">
+            <p>&copy; 2024 PoliStanze Lecco. Un progetto per gli studenti, dagli studenti.</p>
+        </div>
+    </footer>
+
+    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4 hidden"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // --- DATI GLOBALI ---
+    let allListingsData = []; // Verrà riempito dal file JSON
+    const currentUserId = 1;
+
+    // Dati statici che in futuro potranno diventare dinamici
+    const usersData = {
+        1: { id: 1, name: "Mario Rossi", type: 'student', age: 21, nationality: 'Italiana', course: 'Ingegneria della Produzione Industriale', avatar: 'https://placehold.co/128x128/e0e7ff/4f46e5?text=MR', homeId: 101 },
+        2: { id: 2, name: "Giulia Bianchi", type: 'student', age: 22, nationality: 'Italiana', course: 'Ingegneria Civile', avatar: 'https://placehold.co/128x128/d1fae5/065f46?text=GB', homeId: 101 },
+        3: { id: 3, name: "Luca Verdi", type: 'landlord', name: "Luca Verdi", avatar: 'https://placehold.co/64x64/fef9c3/b45309?text=LV'},
+        4: { id: 4, name: "Sofia Neri", type: 'student', age: 20, nationality: 'Spagnola', course: 'Ingegneria Meccanica', avatar: 'https://placehold.co/128x128/fee2e2/991b1b?text=SN', homeId: 101},
+        5: { id: 5, name: "Anna Costa", type: 'landlord', avatar: 'https://placehold.co/64x64/e0f2fe/0891b2?text=AC'}
+    };
+    const homesData = { 101: { listingId: 1, tenantIds: [1, 2, 4] } };
+    const reviewsData = [
+        { id: 1, revieweeId: 1, reviewerId: 3, rating: 5, text: "Mario è uno studente modello. Preciso nei pagamenti e molto rispettoso della casa." },
+        { id: 2, revieweeId: 1, reviewerId: 2, rating: 4, text: "Un ottimo coinquilino, sempre disponibile e collaborativo nelle faccende domestiche." }
+    ];
+    const campusLecco = { lat: 45.8669, lng: 9.3997 };
+
+    // --- RIFERIMENTI AL DOM ---
+    const priceRange = document.getElementById('price');
+    const priceValue = document.getElementById('price-value');
+    const typeFilters = document.querySelectorAll('.filter-type');
+    const featureFilters = document.querySelectorAll('.filter-feature');
+    const gridView = document.getElementById('grid-view');
+    const resultsCount = document.getElementById('results-count');
+    const gridViewBtn = document.getElementById('grid-view-btn');
+    const mapViewBtn = document.getElementById('map-view-btn');
+    const mapViewContainer = document.getElementById('map-view');
+    const modalContainer = document.getElementById('modal-container');
+    const navLinks = document.getElementById('nav-links');
+    
+    let map;
+    let markers = [];
+
+    // --- FUNZIONE DI INIZIALIZZAZIONE ---
+    async function initializeApp() {
+        try {
+            const response = await fetch('annunci.json');
+            if (!response.ok) {
+                throw new Error(`Errore HTTP! Stato: ${response.status}`);
+            }
+            allListingsData = await response.json();
+
+            setupEventListeners();
+            switchView('view-search');
+            filterAndRender();
+            renderChart();
+        } catch (error) {
+            console.error("Impossibile caricare gli annunci:", error);
+            gridView.innerHTML = `<p class="text-red-500 col-span-full text-center">Errore nel caricamento degli annunci. Controlla il file annunci.json e ricarica la pagina.</p>`;
+        }
+    }
+
+    function setupEventListeners() {
+        priceRange.addEventListener('input', (e) => {
+            priceValue.textContent = e.target.value === '1000' ? '1000+' : e.target.value;
+            filterAndRender();
+        });
+        typeFilters.forEach(cb => cb.addEventListener('change', filterAndRender));
+        featureFilters.forEach(cb => cb.addEventListener('change', filterAndRender));
+        
+        gridViewBtn.addEventListener('click', () => {
+            mapViewContainer.classList.add('hidden');
+            gridView.classList.remove('hidden');
+            gridViewBtn.classList.add('bg-blue-600', 'text-white');
+            mapViewBtn.classList.remove('bg-blue-600', 'text-white');
+        });
+
+        mapViewBtn.addEventListener('click', () => {
+            gridView.classList.add('hidden');
+            mapViewContainer.classList.remove('hidden');
+            mapViewBtn.classList.add('bg-blue-600', 'text-white');
+            gridViewBtn.classList.remove('bg-blue-600', 'text-white');
+            initMap();
+            filterAndRender();
+            setTimeout(() => map.invalidateSize(), 100);
+        });
+
+        navLinks.addEventListener('click', (e) => {
+            if (e.target.tagName === 'A') {
+                e.preventDefault();
+                const viewName = e.target.getAttribute('href').substring(1);
+                switchView(`view-${viewName}`);
+            }
+        });
+
+        document.body.addEventListener('click', function(e) {
+            if (e.target.matches('.open-modal-map')) {
+                e.preventDefault();
+                const listingId = parseInt(e.target.getAttribute('data-id'));
+                openModal(listingId);
+            }
+        });
+    }
+    
+    function switchView(viewId) {
+        document.querySelectorAll('main > div').forEach(view => view.classList.add('hidden'));
+        document.getElementById(viewId).classList.remove('hidden');
+
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${viewId.split('-')[1]}`) {
+                link.classList.add('active');
+            }
+        });
+
+        if (viewId === 'view-profile') renderProfile(currentUserId);
+        if (viewId === 'view-my-home') renderMyHome(currentUserId);
+    }
+    
+    function renderStars(rating) {
+        let stars = '';
+        for (let i = 1; i <= 5; i++) {
+            stars += `<span class="text-xl ${i <= rating ? 'text-yellow-400' : 'text-stone-300'}">★</span>`;
+        }
+        return stars;
+    }
+
+    function renderProfile(userId) {
+        const user = usersData[userId];
+        const profileContent = document.getElementById('profile-content');
+        const userReviews = reviewsData.filter(r => r.revieweeId === userId);
+        const avgRating = userReviews.length > 0 ? (userReviews.reduce((acc, r) => acc + r.rating, 0) / userReviews.length).toFixed(1) : 0;
+
+        profileContent.innerHTML = `
+            <div class="flex flex-col md:flex-row gap-8">
+                <div class="w-full md:w-1/3">
+                    <div class="bg-white p-6 rounded-xl shadow-lg text-center">
+                        <img src="${user.avatar}" class="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-blue-200">
+                        <h3 class="text-2xl font-bold">${user.name}</h3>
+                        <p class="text-stone-500">${user.course}</p>
+                        <div class="mt-4 flex justify-center items-center gap-2">
+                            ${renderStars(Math.round(avgRating))}
+                            <span class="font-bold text-stone-700">${avgRating}</span>
+                            <span class="text-sm text-stone-500">(${userReviews.length} recensioni)</span>
+                        </div>
+                        <ul class="text-left mt-6 space-y-3 text-stone-600">
+                            <li class="flex items-center"><span class="w-8 text-center mr-2">🎂</span> ${user.age} anni</li>
+                            <li class="flex items-center"><span class="w-8 text-center mr-2">🌍</span> Nazionalità ${user.nationality}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="w-full md:w-2/3">
+                    <h3 class="text-2xl font-bold mb-4">Recensioni Ricevute</h3>
+                    <div class="space-y-6">
+                        ${userReviews.length > 0 ? userReviews.map(review => {
+                            const reviewer = usersData[review.reviewerId];
+                            return `
+                            <div class="bg-white p-5 rounded-xl shadow-lg">
+                                <div class="flex items-center mb-3">
+                                    <img src="${reviewer.avatar}" class="w-12 h-12 rounded-full mr-4">
+                                    <div>
+                                        <p class="font-bold">${reviewer.name}</p>
+                                        <div class="flex items-center">${renderStars(review.rating)}</div>
+                                    </div>
+                                </div>
+                                <p class="text-stone-600">${review.text}</p>
+                            </div>
+                            `
+                        }).join('') : '<p class="text-stone-500 bg-white p-5 rounded-xl shadow-lg">Nessuna recensione ancora.</p>'}
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    function renderMyHome(userId) {
+        const user = usersData[userId];
+        const myHomeContent = document.getElementById('my-home-content');
+        const home = homesData[user.homeId];
+
+        if (!home) {
+            myHomeContent.innerHTML = `<p class="text-stone-500 bg-white p-5 rounded-xl shadow-lg">Attualmente non sei registrato in nessuna casa.</p>`;
+            return;
+        }
+
+        const listing = allListingsData.find(l => l.id === home.listingId);
+        const flatmates = home.tenantIds.filter(id => id !== userId).map(id => usersData[id]);
+
+        myHomeContent.innerHTML = `
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2">
+                    <img src="${listing.images[0]}" class="w-full h-64 object-cover">
+                    <div class="p-6">
+                         <h3 class="text-2xl font-bold">${listing.title}</h3>
+                         <p class="text-stone-500 mt-2">${listing.description}</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-2xl font-bold mb-4">I Tuoi Coinquilini</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${flatmates.length > 0 ? flatmates.map(flatmate => `
+                        <div class="bg-white p-5 rounded-xl shadow-lg text-center">
+                            <img src="${flatmate.avatar}" class="w-24 h-24 rounded-full mx-auto mb-3">
+                            <h4 class="font-bold text-lg">${flatmate.name}</h4>
+                            <p class="text-sm text-stone-500">${flatmate.course}</p>
+                            <button class="mt-4 bg-blue-100 text-blue-700 font-semibold px-4 py-2 text-sm rounded-lg hover:bg-blue-200 transition">Lascia una recensione</button>
+                        </div>
+                    `).join('') : '<p class="col-span-full text-center text-stone-500">Non hai coinquilini al momento.</p>'}
+                </div>
+            </div>`;
+    }
+
+    function initMap() {
+        if(document.getElementById('map') && !map) {
+            map = L.map('map').setView([campusLecco.lat, campusLecco.lng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            L.marker([campusLecco.lat, campusLecco.lng], {
+                icon: L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                })
+            }).addTo(map).bindPopup("<b>Politecnico di Lecco</b>").openPopup();
+        }
+    }
+    
+    function updateMarkers(listings) {
+        if (!map) return;
+        markers.forEach(marker => map.removeLayer(marker));
+        markers = [];
+        listings.forEach(listing => {
+            const marker = L.marker([listing.lat, listing.lng]).addTo(map);
+            marker.bindPopup(`<b>${listing.title}</b><br>€${listing.price}/mese.<br><a href="#" class="text-blue-600 font-semibold open-modal-map" data-id="${listing.id}">Vedi dettagli</a>`);
+            markers.push(marker);
+        });
+    }
+
+    function filterAndRender() {
+        const priceLimit = parseInt(priceRange.value);
+        const selectedTypes = Array.from(typeFilters).filter(cb => cb.checked).map(cb => cb.value);
+        const selectedFeatures = Array.from(featureFilters).filter(cb => cb.checked).map(cb => cb.value);
+        
+        const filteredListings = allListingsData.filter(listing => {
+            const priceMatch = listing.price <= priceLimit;
+            const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(listing.type);
+            const featureMatch = selectedFeatures.every(feature => listing.features.includes(feature));
+            return priceMatch && typeMatch && featureMatch;
+        });
+        renderListings(filteredListings);
+    }
+    
+    function renderListings(listings) {
+        gridView.innerHTML = '';
+        if (listings.length === 0) {
+            gridView.innerHTML = `<p class="text-stone-500 col-span-full text-center">Nessun annuncio corrisponde ai criteri di ricerca.</p>`;
+        }
+        listings.forEach(listing => {
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 cursor-pointer";
+            card.innerHTML = `
+                <img src="${listing.images[0]}" alt="${listing.title}" class="w-full h-48 object-cover">
+                <div class="p-4">
+                    <p class="text-sm text-blue-600 font-semibold">${listing.type}</p>
+                    <h3 class="text-lg font-bold text-stone-800 truncate mt-1">${listing.title}</h3>
+                    <p class="text-stone-600 mt-2">${listing.dist} min a piedi dal campus</p>
+                    <div class="flex justify-between items-center mt-4">
+                        <p class="text-xl font-bold text-blue-700">€${listing.price}<span class="text-sm font-normal text-stone-500">/mese</span></p>
+                        <span class="text-sm text-white bg-stone-700 px-2 py-1 rounded-md">Vedi</span>
+                    </div>
+                </div>
+            `;
+            card.addEventListener('click', () => openModal(listing.id));
+            gridView.appendChild(card);
+        });
+        resultsCount.textContent = listings.length;
+        if (map) updateMarkers(listings);
+    }
+
+    async function generateEmailDraft(listing) {
+        const emailDraftContainer = document.getElementById('email-draft-container');
+        const generateButton = document.getElementById('generate-email-btn');
+        generateButton.disabled = true;
+        emailDraftContainer.innerHTML = `<div class="flex items-center justify-center p-4 bg-stone-100 rounded-lg"><div class="spinner w-6 h-6 border-4 border-stone-200 rounded-full"></div><p class="ml-3 text-stone-600">Generazione in corso...</p></div>`;
+        const prompt = `Sei un assistente virtuale per studenti. Scrivi una breve e formale email in italiano per uno studente del Politecnico di Lecco interessato a un annuncio immobiliare: "${listing.title}". Chiedi disponibilità e la possibilità di una visita. Concludi formalmente.`;
+        const apiKey = ""; 
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] })
+            });
+            if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+            const result = await response.json();
+            const text = result.candidates[0].content.parts[0].text;
+            emailDraftContainer.innerHTML = `<div class="relative"><textarea id="email-content" class="w-full h-64 p-3 border rounded-lg bg-stone-50">${text}</textarea><button id="copy-email-btn" class="absolute top-2 right-2 bg-stone-200 text-stone-700 px-2 py-1 text-xs font-semibold rounded-md hover:bg-stone-300">Copia</button></div>`;
+            document.getElementById('copy-email-btn').addEventListener('click', () => {
+                const emailText = document.getElementById('email-content');
+                emailText.select();
+                document.execCommand('copy');
+                document.getElementById('copy-email-btn').textContent = 'Copiato!';
+                setTimeout(() => { document.getElementById('copy-email-btn').textContent = 'Copia'; }, 2000);
+            });
+        } catch (error) {
+            console.error("Error calling Gemini API:", error);
+            emailDraftContainer.innerHTML = `<p class="text-red-500 p-4 bg-red-100 rounded-lg">Errore durante la generazione. Riprova.</p>`;
+        } finally {
+             generateButton.disabled = false;
+        }
+    }
+    
+    function openModal(listingId) {
+        const listing = allListingsData.find(l => l.id === listingId);
+        if (!listing) return;
+        modalContainer.innerHTML = `
+            <div class="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative modal-enter" id="modal-content">
+                <button id="close-modal" class="absolute top-4 right-4 text-stone-500 hover:text-stone-800 z-10"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
+                    <div class="h-64 md:h-full"><img src="${listing.images[0]}" alt="${listing.title}" class="w-full h-full object-cover md:rounded-l-xl"></div>
+                    <div class="p-8 flex flex-col">
+                        <div>
+                            <p class="text-sm text-blue-600 font-semibold">${listing.type}</p>
+                            <h2 class="text-3xl font-bold text-stone-800 mt-2">${listing.title}</h2>
+                            <p class="text-2xl font-bold text-blue-700 mt-4">€${listing.price} <span class="text-base font-normal text-stone-500">/ mese</span></p>
+                            <div class="mt-6 border-t pt-6"><h4 class="font-semibold text-lg mb-3">Descrizione</h4><p class="text-stone-600">${listing.description}</p></div>
+                            <div class="mt-6 border-t pt-6"><h4 class="font-semibold text-lg mb-3">Dettagli</h4>
+                                <ul class="space-y-2 text-stone-700">
+                                    <li class="flex items-center"><span class="mr-3 text-blue-500">📍</span> A ${listing.dist} minuti a piedi dal campus</li>
+                                    ${listing.features.includes('wifi') ? '<li class="flex items-center"><span class="mr-3 text-blue-500">📶</span> Wi-Fi incluso</li>' : ''}
+                                    ${listing.features.includes('lavatrice') ? '<li class="flex items-center"><span class="mr-3 text-blue-500">🧺</span> Lavatrice disponibile</li>' : ''}
+                                    ${listing.features.includes('spese incluse') ? '<li class="flex items-center"><span class="mr-3 text-blue-500">💡</span> Spese incluse</li>' : ''}
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-auto pt-8">
+                            <button id="generate-email-btn" class="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold py-3 rounded-lg hover:from-purple-600 hover:to-blue-600 transition">✨ Scrivi bozza email</button>
+                            <div id="email-draft-container" class="mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        modalContainer.classList.remove('hidden');
+        setTimeout(() => { document.getElementById('modal-content').classList.add('modal-enter-active'); }, 10);
+        document.getElementById('close-modal').addEventListener('click', closeModal);
+        document.getElementById('generate-email-btn').addEventListener('click', () => generateEmailDraft(listing));
+        modalContainer.addEventListener('click', (e) => { if(e.target === modalContainer) closeModal(); });
+    }
+    
+    function closeModal() {
+        const modalContent = document.getElementById('modal-content');
+        modalContent.classList.remove('modal-enter-active');
+        modalContent.classList.add('modal-exit-active');
+        setTimeout(() => { modalContainer.classList.add('hidden'); modalContainer.innerHTML = ''; }, 300);
+    }
+    
+    function renderChart() {
+        const chartEl = document.getElementById('typeDistributionChart');
+        if(!chartEl) return;
+        const ctx = chartEl.getContext('2d');
+        const typeCounts = allListingsData.reduce((acc, curr) => { acc[curr.type] = (acc[curr.type] || 0) + 1; return acc; }, {});
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(typeCounts),
+                datasets: [{
+                    label: 'Numero di Annunci',
+                    data: Object.values(typeCounts),
+                    backgroundColor: ['rgba(59, 130, 246, 0.7)', 'rgba(30, 58, 138, 0.7)', 'rgba(96, 165, 250, 0.7)', 'rgba(147, 197, 253, 0.7)'],
+                    borderColor: ['rgb(59, 130, 246)', 'rgb(30, 58, 138)', 'rgb(96, 165, 250)', 'rgb(147, 197, 253)'],
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+        });
+    }
+    
+    // --- AVVIO APPLICAZIONE ---
+    initializeApp();
+});
+</script>
+
+</body>
+</html>

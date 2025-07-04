@@ -1,0 +1,50 @@
+[
+    {
+        "id": 1,
+        "title": "Stanza Singola Maggianico 1",
+        "price": 450,
+        "type": "Stanza Singola",
+        "lat": 45.8680,
+        "lng": 9.4010,
+        "dist": 5,
+        "images": ["Images/Maggianico_1/prova1.jpg"],
+        "features": ["wifi", "spese incluse"],
+        "description": "Luminosa stanza singola in appartamento condiviso, a soli 5 minuti a piedi dal Politecnico. Completamente arredata e con Wi-Fi veloce incluso."
+    },
+    {
+        "id": 2,
+        "title": "Stanza Singola Maggianico 2",
+        "price": 450,
+        "type": "Stanza Singola",
+        "lat": 45.8645,
+        "lng": 9.3980,
+        "dist": 8,
+        "images": ["https://placehold.co/600x400/1e3a8a/FFFFFF?text=Stanza+2"],
+        "features": ["lavatrice"],
+        "description": "Posto letto in stanza doppia spaziosa. Ideale per chi cerca una soluzione economica senza rinunciare alla comodità."
+    },
+    {
+        "id": 3,
+        "title": "Stanza Singola Maggianico 3",
+        "price": 450,
+        "type": "Stanza Singola",
+        "lat": 45.8695,
+        "lng": 9.3950,
+        "dist": 12,
+        "images": ["https://placehold.co/600x400/60a5fa/FFFFFF?text=Monolocale"],
+        "features": ["wifi", "lavatrice"],
+        "description": "Moderno monolocale con angolo cottura e bagno privato. Perfetto per chi desidera la massima indipendenza."
+    },
+    {
+        "id": 4,
+        "title": "Tipo",
+        "price": 0,
+        "type": "Stanza Singola",
+        "lat": 45.8610,
+        "lng": 9.4050,
+        "dist": 15,
+        "images": ["https://placehold.co/600x400/93c5fd/FFFFFF?text=Appartamento"],
+        "features": ["wifi", "lavatrice", "spese incluse"],
+        "description": "Trilocale con due camere da letto, ideale per 2 o 3 studenti. Zona giorno spaziosa e due balconi."
+    }
+]
