@@ -4,7 +4,7 @@
         "title": "Stanza Singola Maggianico 1",
         "price": 450,
         "type": "Stanza Singola",
-        "address": "Via Poncione 2, 23900 Lecco"
+        "address": "Via Poncione 2, 23900 Lecco",
         "dist": 5,
         "images": ["prova1.jpg"],
         "features": ["wifi", "spese incluse"],
@@ -15,7 +15,7 @@
         "title": "Stanza Singola Maggianico 2",
         "price": 450,
         "type": "Stanza Singola",
-        "address": "Via Poncione 2, 23900 Lecco"
+        "address": "Via Poncione 2, 23900 Lecco",
         "dist": 8,
         "images": ["https://placehold.co/600x400/1e3a8a/FFFFFF?text=Stanza+2"],
         "features": ["lavatrice"],
@@ -26,7 +26,7 @@
         "title": "Stanza Singola Maggianico 3",
         "price": 450,
         "type": "Stanza Singola",
-        "address": "Via Poncione 2, 23900 Lecco"
+        "address": "Via Poncione 2, 23900 Lecco",
         "dist": 12,
         "images": ["https://placehold.co/600x400/60a5fa/FFFFFF?text=Monolocale"],
         "features": ["wifi", "lavatrice"],
@@ -37,7 +37,7 @@
         "title": "Tipo",
         "price": 0,
         "type": "Stanza Singola",
-        "address": "Via Poncione 2, 23900 Lecco"
+        "address": "Via Poncione 2, 23900 Lecco",
         "dist": 15,
         "images": ["https://placehold.co/600x400/93c5fd/FFFFFF?text=Appartamento"],
         "features": ["wifi", "lavatrice", "spese incluse"],
