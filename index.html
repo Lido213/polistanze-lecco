@@ -381,16 +381,44 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     
-    function updateMarkers(listings) {
-        if (!map) return;
-        markers.forEach(marker => map.removeLayer(marker));
-        markers = [];
-        listings.forEach(listing => {
-            const marker = L.marker([listing.lat, listing.lng]).addTo(map);
-            marker.bindPopup(`<b>${listing.title}</b><br>€${listing.price}/mese.<br><a href="#" class="text-blue-600 font-semibold open-modal-map" data-id="${listing.id}">Vedi dettagli</a>`);
-            markers.push(marker);
-        });
+    async function updateMarkers(listings) {
+    if (!map) return;
+    
+    // Rimuove i vecchi markers dalla mappa
+    markers.forEach(marker => map.removeLayer(marker));
+    markers = [];
+
+    // Per ogni annuncio nella lista...
+    for (const listing of listings) {
+        if (!listing.address) continue; // Salta l'annuncio se non ha un indirizzo
+
+        // 1. Costruisci l'URL per l'API di Nominatim
+        const query = encodeURIComponent(listing.address);
+        const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
+
+        try {
+            // 2. Invia la richiesta all'API
+            const response = await fetch(url);
+            const data = await response.json();
+
+            // 3. Se l'API ha trovato delle coordinate...
+            if (data && data.length > 0) {
+                const lat = data[0].lat;
+                const lon = data[0].lon;
+
+                // 4. Crea e aggiungi il marcatore alla mappa
+                const marker = L.marker([lat, lon]).addTo(map);
+                marker.bindPopup(`<b>${listing.title}</b><br>€${listing.price}/mese.<br><a href="#" class="text-blue-600 font-semibold open-modal-map" data-id="${listing.id}">Vedi dettagli</a>`);
+                markers.push(marker);
+            }
+        } catch (error) {
+            console.error('Errore durante il geocoding per l\'indirizzo:', listing.address, error);
+        }
+        
+        // Aggiungiamo una piccola pausa per rispettare i limiti di utilizzo dell'API (1 richiesta/sec)
+        await new Promise(resolve => setTimeout(resolve, 1000)); 
     }
+}
 
     function filterAndRender() {
         const priceLimit = parseInt(priceRange.value);
