@@ -37,7 +37,7 @@
         "title": "Tipo",
         "price": 0,
         "type": "Stanza Singola",
-        "address": "Via Poncione 2, 23900 Lecco",
+        "address": "Via Poncione 1, 23900 Lecco",
         "dist": 15,
         "images": ["https://placehold.co/600x400/93c5fd/FFFFFF?text=Appartamento"],
         "features": ["wifi", "lavatrice", "spese incluse"],
