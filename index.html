@@ -495,28 +495,42 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     async function updateMarkers(listings) {
-        if (!map) return;
-        markers.forEach(marker => map.removeLayer(marker));
-        markers = [];
-        for (const listing of listings) {
-            if (!listing.address) continue;
-            const query = encodeURIComponent(listing.address);
-            const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    const { lat, lon } = data[0];
-                    const marker = L.marker([lat, lon]).addTo(map);
-                    marker.bindPopup(`<b>${listing.title}</b><br>€${listing.price}/mese.<br><a href="#" class="text-blue-600 font-semibold open-modal-map" data-id="${listing.id}">Vedi dettagli</a>`);
-                    markers.push(marker);
-                }
-            } catch (error) {
-                console.error(`Errore geocoding per "${listing.address}":`, error);
+    if (!map) return;
+
+    // Svuotiamo i vecchi marcatori
+    markers.forEach(marker => map.removeLayer(marker));
+    markers = [];
+
+    for (const listing of listings) {
+        if (!listing.address) continue; // Salta se non c'è l'indirizzo
+
+        const query = encodeURIComponent(listing.address);
+        const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
+        
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data && data.length > 0) {
+                const { lat, lon } = data[0];
+                const marker = L.marker([lat, lon]).addTo(map);
+
+                // --- MODIFICA CHIAVE ---
+                // Invece di un piccolo popup, ora un click sul marcatore
+                // chiama direttamente la nostra funzione per il modale grande.
+                marker.on('click', () => {
+                    openModal(listing.id);
+                });
+                
+                markers.push(marker);
             }
-            await new Promise(resolve => setTimeout(resolve, 1000)); 
+        } catch (error) {
+            console.error(`Errore geocoding per "${listing.address}":`, error);
         }
+        
+        await new Promise(resolve => setTimeout(resolve, 1000)); 
     }
+}
 
     // =======================================================================
     // GRUPPO 7: LOGICA PRINCIPALE E GESTIONE DEGLI EVENTI DINAMICI
