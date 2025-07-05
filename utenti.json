@@ -1,0 +1,45 @@
+{
+  "studenti": [
+    {
+      "id": 1,
+      "name": "Mario Rossi",
+      "age": 21,
+      "nationality": "Italiana",
+      "course": "Ingegneria della Produzione Industriale",
+      "avatar": "https://placehold.co/128x128/e0e7ff/4f46e5?text=MR",
+      "homeId": 101
+    },
+    {
+      "id": 2,
+      "name": "Giulia Bianchi",
+      "age": 22,
+      "nationality": "Italiana",
+      "course": "Ingegneria Civile",
+      "avatar": "https://placehold.co/128x128/d1fae5/065f46?text=GB",
+      "homeId": 101
+    },
+    {
+      "id": 4,
+      "name": "Sofia Neri",
+      "age": 20,
+      "nationality": "Spagnola",
+      "course": "Ingegneria Meccanica",
+      "avatar": "https://placehold.co/128x128/fee2e2/991b1b?text=SN",
+      "homeId": 101
+    }
+  ],
+  "proprietari": [
+    {
+      "id": 3,
+      "name": "Luca Verdi",
+      "phone": "333 1234567",
+      "avatar": "https://placehold.co/64x64/fef9c3/b45309?text=LV"
+    },
+    {
+      "id": 5,
+      "name": "Anna Costa",
+      "phone": "347 7654321",
+      "avatar": "https://placehold.co/64x64/e0f2fe/0891b2?text=AC"
+    }
+  ]
+}
