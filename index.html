@@ -33,8 +33,13 @@
         .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
         @media (min-width: 768px) { .chart-container { height: 350px; } }
     #modal-container {
-    z-index: 1001; /* Un valore alto per stare sempre sopra a tutto */
+    z-index: 2000; /* Un valore ancora più alto */
 }
+
+#modal-content {
+    z-index: 2001 !important; /* !important forza questa regola sopra tutte le altre */
+}
+        
     </style>
 </head>
 <body class="bg-stone-50 text-stone-800">
