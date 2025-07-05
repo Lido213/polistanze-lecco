@@ -34,13 +34,13 @@
     },
     {
         "id": 4,
-        "title": "CULO",
+        "title": "TIPO",
         "price": 0,
-        "type": "Stanza Singola",
+        "type": "Tipo Stanza",
         "address": "Via Poncione 1, 23900 Lecco",
         "dist": 15,
         "images": ["https://placehold.co/600x400/93c5fd/FFFFFF?text=Appartamento"],
         "features": ["wifi", "lavatrice", "spese incluse"],
-        "description": "Trilocale con due camere da letto, ideale per 2 o 3 studenti. Zona giorno spaziosa e due balconi."
+        "description": "Descrizione della stanza"
     }
 ]
