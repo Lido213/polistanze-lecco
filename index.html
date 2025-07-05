@@ -496,35 +496,76 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     function openModal(listingId) {
-        const listing = allListingsData.find(l => l.id === listingId);
-        if (!listing) return;
-        modalContainer.innerHTML = `
-            <div class="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative modal-enter" id="modal-content">
-                <button id="close-modal" class="absolute top-4 right-4 text-stone-500 hover:text-stone-800 z-10"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
-                    <div class="h-64 md:h-full"><img src="${listing.images[0]}" alt="${listing.title}" class="w-full h-full object-cover md:rounded-l-xl"></div>
-                    <div class="p-8 flex flex-col">
-                        <div>
-                            <p class="text-sm text-blue-600 font-semibold">${listing.type}</p>
-                            <h2 class="text-3xl font-bold text-stone-800 mt-2">${listing.title}</h2>
-                            <p class="text-2xl font-bold text-blue-700 mt-4">€${listing.price} <span class="text-base font-normal text-stone-500">/ mese</span></p>
-                            <div class="mt-6 border-t pt-6"><h4 class="font-semibold text-lg mb-3">Descrizione</h4><p class="text-stone-600">${listing.description}</p></div>
-                            <div class="mt-6 border-t pt-6"><h4 class="font-semibold text-lg mb-3">Dettagli</h4>
-                                <ul class="space-y-2 text-stone-700">
-                                    <li class="flex items-center"><span class="mr-3 text-blue-500">📍</span> A ${listing.dist} minuti a piedi dal campus</li>
-                                    ${listing.features.includes('wifi') ? '<li class="flex items-center"><span class="mr-3 text-blue-500">📶</span> Wi-Fi incluso</li>' : ''}
-                                    ${listing.features.includes('lavatrice') ? '<li class="flex items-center"><span class="mr-3 text-blue-500">🧺</span> Lavatrice disponibile</li>' : ''}
-                                    ${listing.features.includes('spese incluse') ? '<li class="flex items-center"><span class="mr-3 text-blue-500">💡</span> Spese incluse</li>' : ''}
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="mt-auto pt-8">
-                            <button id="generate-email-btn" class="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold py-3 rounded-lg hover:from-purple-600 hover:to-blue-600 transition">✨ Scrivi bozza email</button>
-                            <div id="email-draft-container" class="mt-4"></div>
+    const listing = allListingsData.find(l => l.id === listingId);
+    if (!listing) return;
+
+    // 1. Trova i dati del proprietario usando l'ownerId dal listing
+    const owner = usersData[listing.ownerId];
+    let ownerHtml = ''; // Inizializziamo una stringa vuota per l'HTML del proprietario
+
+    // 2. Se un proprietario esiste, costruiamo il blocco HTML
+    if (owner) {
+        ownerHtml = `
+        <div class="mt-auto pt-6 border-t">
+            <h4 class="font-semibold text-lg mb-3">Contatta il Proprietario</h4>
+            <div id="owner-profile-link" data-owner-id="${owner.id}" class="flex items-center p-3 rounded-lg bg-stone-100 hover:bg-stone-200 cursor-pointer transition">
+                <img src="${owner.avatar}" class="w-12 h-12 rounded-full mr-4">
+                <div class="flex-grow">
+                    <p class="font-bold text-stone-800">${owner.name}</p>
+                    <p class="text-sm text-stone-600">${owner.phone}</p>
+                </div>
+                <span class="text-stone-400">→</span>
+            </div>
+        </div>
+        `;
+    }
+
+    // 3. Inseriamo il nuovo blocco HTML nel template del modal
+    modalContainer.innerHTML = `
+        <div class="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative modal-enter" id="modal-content">
+            <button id="close-modal" class="absolute top-4 right-4 text-stone-500 hover:text-stone-800 z-10"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
+                <div class="h-64 md:h-full"><img src="${listing.images[0]}" alt="${listing.title}" class="w-full h-full object-cover md:rounded-l-xl"></div>
+                <div class="p-8 flex flex-col">
+                    <div>
+                        <p class="text-sm text-blue-600 font-semibold">${listing.type}</p>
+                        <h2 class="text-3xl font-bold text-stone-800 mt-2">${listing.title}</h2>
+                        <p class="text-2xl font-bold text-blue-700 mt-4">€${listing.price} <span class="text-base font-normal text-stone-500">/ mese</span></p>
+                        <div class="mt-6 border-t pt-6"><h4 class="font-semibold text-lg mb-3">Descrizione</h4><p class="text-stone-600">${listing.description}</p></div>
+                        <div class="mt-6 border-t pt-6"><h4 class="font-semibold text-lg mb-3">Dettagli</h4>
+                            <ul class="space-y-2 text-stone-700">
+                                <li class="flex items-center"><span class="mr-3 text-blue-500">📍</span> A ${listing.dist} minuti a piedi dal campus</li>
+                                ${listing.features.includes('wifi') ? '<li class="flex items-center"><span class="mr-3 text-blue-500">📶</span> Wi-Fi incluso</li>' : ''}
+                                ${listing.features.includes('lavatrice') ? '<li class="flex items-center"><span class="mr-3 text-blue-500">🧺</span> Lavatrice disponibile</li>' : ''}
+                                ${listing.features.includes('spese incluse') ? '<li class="flex items-center"><span class="mr-3 text-blue-500">💡</span> Spese incluse</li>' : ''}
+                            </ul>
                         </div>
                     </div>
+                    ${ownerHtml} 
                 </div>
-            </div>`;
+            </div>
+        </div>`;
+
+    modalContainer.classList.remove('hidden');
+    setTimeout(() => { document.getElementById('modal-content').classList.add('modal-enter-active'); }, 10);
+
+    // 4. Aggiungiamo gli event listener per i nuovi pulsanti
+    document.getElementById('close-modal').addEventListener('click', closeModal);
+    modalContainer.addEventListener('click', (e) => { if(e.target === modalContainer) closeModal(); });
+
+    const ownerProfileLink = document.getElementById('owner-profile-link');
+    if (ownerProfileLink) {
+        ownerProfileLink.addEventListener('click', (e) => {
+            const ownerId = parseInt(e.currentTarget.getAttribute('data-owner-id'));
+            closeModal(); // Chiudiamo il popup corrente
+            // Un piccolo ritardo per dare tempo all'animazione di chiusura di completarsi
+            setTimeout(() => {
+                renderOwnerProfile(ownerId);
+                switchView('view-owner-profile');
+            }, 300);
+        });
+    }
+}
         modalContainer.classList.remove('hidden');
         setTimeout(() => { document.getElementById('modal-content').classList.add('modal-enter-active'); }, 10);
         document.getElementById('close-modal').addEventListener('click', closeModal);
